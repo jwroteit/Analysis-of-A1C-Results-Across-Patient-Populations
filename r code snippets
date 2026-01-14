@@ -1,0 +1,180 @@
+excluded some code for privacy reasons
+
+# dependencies
+
+library(dplyr)
+library(ggplot2)
+library(gtsummary)
+
+# upload data
+data_a1c <- read.csv("~/Downloads/2025-11-23 7_29pm.csv")
+
+# make a new df and filter out NAs
+data_sub <- data_a1c |>
+  select(
+    order_id
+    ,dtc_gic
+    ,result_value
+  ) |>
+  filter(!is.na(result_value))
+
+# make new var diabetes level
+data_sub <- data_sub |>
+  mutate(
+    diabetes_level = case_when(
+      result_value < 5.7 ~ "Normal"
+      ,result_value < 7.0 ~ "Pre-Diabetes"
+      ,result_value >= 7.0 ~ "Diabetes"
+    )
+  )
+
+# make diabetes level into factor
+data_sub$diabetes_level <- factor(data_sub$diabetes_level
+                                  ,levels = c("Normal", "Pre-Diabetes", "Diabetes")
+                                )
+# make dataframes for each sub population
+gic <- data_sub |>
+  filter(dtc_gic == 'GIC')
+
+dtc <- data_sub |>
+  filter(dtc_gic == 'DTC')
+
+
+# try to normalize through log transformations
+log_data <- data_sub |>
+  mutate(
+    log_result = log(result_value)
+  )
+gic_log <- log_data |>
+  filter(dtc_gic == 'GIC')
+
+dtc_log <- log_data |>
+  filter(dtc_gic == 'DTC')
+
+# make descriptive stats table
+tbl_summary(
+  data = data_sub
+  ,by = dtc_gic
+  ,label = list(result_value = "Median A1C", diabetes_level = "Diabetes Level")
+  ,statistic = list(all_continuous() ~ "{median}; {sd}"
+                    ,all_categorical() ~"{n} ({p}%)")
+  ,include = c("result_value", "diabetes_level")
+)
+
+### visualize the data more
+
+par(mfrow = c(2,1))
+
+ggplot(dtc, aes(x = result_value)) +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    bins = 40,
+    fill = "green",
+    color = "white",
+    alpha = 0.9
+  ) +
+  geom_vline(
+    xintercept = median(dtc$result_value),
+    color = "purple",
+    linewidth = 1.3
+  ) +
+  geom_vline(
+    xintercept = mean(dtc$result_value),
+    color = "orange",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Distribution of Direct-to-Consumer A1C Results",
+    x = "A1C Result Value",
+    y = "Density"
+  ) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    hjust = 1.05, vjust = 1.2,
+    label = paste0(
+      "Median = ", round(median(dtc$result_value), 1),
+      "\nMean = ", round(mean(dtc$result_value), 1)
+    )
+  ) +
+  theme_minimal()
+
+ggplot(gic, aes(x = result_value)) +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    bins = 40,
+    fill = "#green",
+    color = "white",
+    alpha = 0.9
+  ) +
+  geom_vline(
+    xintercept = median(gic$result_value),
+    color = "purple",
+    linewidth = 1.3
+  ) +
+  geom_vline(
+    xintercept = mean(gic$result_value),
+    color = "orange",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Distribution of Gaps in Care A1C Results",
+    x = "A1C Result Value",
+    y = "Density"
+  ) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    hjust = 1.05, vjust = 1.2,
+    label = paste0(
+      "Median = ", round(median(gic$result_value), 1),
+      "\nMean = ", round(mean(gic$result_value), 1)
+    )
+  ) +
+  theme_minimal()
+
+#boxplot side by side
+ggplot(data_sub, aes(x = dtc_gic, y = result_value, fill = dtc_gic)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(
+    title = "A1C Results for Gaps in Care vs Direct-to-Consumer Patients",
+    x = "",
+    y = "A1C Result Value",
+    fill = "Group"
+  ) +
+  theme_minimal()
+
+# QQ plots to visualize normality
+qqnorm(gic$result_value)
+qqline(gic$result_value, col = "blue")
+
+qqnorm(dtc$result_value)
+qqline(dtc$result_value, col = "blue")
+
+# boxplot and QQ plots after log transformations
+ggplot(log_data, aes(x = log_result, fill = dtc_gic)) +
+  geom_boxplot() +
+  facet_wrap(vars(dtc_gic)) +
+  coord_flip() +
+  labs(
+    title = "Boxplot of the Log of A1C Results for Gaps in Care and Direct-to-Consumer Patients"
+    ,x = "Logarithm of Result Value"
+    ,fill = "DTC or GIC"
+  )
+
+qqnorm(log_data$log_result)
+qqline(log_data$log_result, col = "blue")
+
+# wilcoxon tests
+
+wtest_results <- wilcox.test(dtc$result_value, gic$result_value, paired = FALSE, alternative = "less")
+
+test_stat <- wtest_results$statistic
+p_value <- wtest_results$p.value
+
+w_two_sided_test <- wilcox.test(dtc$result_value, gic$result_value, paired = FALSE, alternative = "two.sided", conf.int = TRUE)
+
+conf_int <- w_two_sided_test$conf.int
