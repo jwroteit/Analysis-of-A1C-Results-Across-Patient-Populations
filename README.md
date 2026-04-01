@@ -1,21 +1,39 @@
 # Analysis-of-A1C-Results-Across-Patient-Populations
 
-#### Overview
-This repository contains a reproducible R-based analysis comparing A1C test results across Direct-to-Consumer (DTC) and Gaps-in-Care (GIC) patient populations. The project uses descriptive statistics, distributional analysis, and a Wilcoxon rank-sum test to assess whether A1C values differ significantly between the two groups. Results show that GIC patients have a higher median A1C and a substantially higher share of diabetes-range results, suggesting greater downstream outreach and care-coordination needs.
+### Overview
+This repository contains an R-based analysis comparing Hemoglobin A1C (HbA1c) test results across two patient populations: Direct-to-Consumer (DTC) and Gaps-in-Care (GIC). The analysis combines descriptive statistics, distributional analysis, and a nonparametric Wilcoxon rank-sum test to evaluate whether A1C values differ significantly between groups. Results indicate that GIC patients exhibit both higher median A1C levels and a substantially higher prevalence of diabetes-range results, suggesting meaningful differences in clinical risk profiles and downstream care needs.
 
-#### Business Impact
-The purpose of this project was to identify if differences between two patient populations exist, and if so, provide support for alternative risk and price modeling as well as inform care coordination staffing. 
+### Business Impact
+This project evaluates whether patient populations differ in ways that materially affect:
+- Risk stratification
+- Pricing models
+- Care coordination staffing and outreach planning
 
-
-#### Key Results
-- sample size after exclusions: 36k+
-- median A1C is approximately 1.00% higher for GIC patients than DTC patients (95% CI)
-- clinical definition of diabetes (>=7.0) varied greatly by group (40% vs 7.5%)
-
-
-#### Methods
-Histograms of A1C results for both gorups were heavily skewed right. Any efforts at transformations did not approximate  a normal distribution thus a nonparametric method was selected. Wilcoxon rank-sum test compares group medians.
+The findings support the hypothesis that GIC populations represent a higher-risk, higher-intensity cohort, implying:
+- Greater expected outreach volume
+- Increased care management complexity
+- Potential need for differentiated pricing and operational support models
 
 
-#### Privacy
-This project was an extension of my graduate studies and contains deidentified patient data. Raw data cannot be made available.
+### Key Results
+- Sample size: 36,000+ A1C test results
+- Median A1C difference: ~1.0% higher in GIC vs DTC (95% CI)
+- Diabetes prevalence (A1C ≥ 7.0): GIC: ~40%, DTC: ~7.5%
+- Distribution shape: Both groups are right-skewed
+
+
+### Methods
+- Exploratory data analysis using histograms and summary statistics
+- Assessment of distributional assumptions (non-normal, right-skewed)
+- Selection of Wilcoxon rank-sum test due to violation of normality assumptions
+- One-sided hypothesis test based on expected higher risk in GIC population
+
+
+### Limitations
+- Age and other demographic variables were not available
+- Analysis is observational and does not imply causality
+- Results are specific to A1C testing and does not generalize to other diagnostic tests
+
+
+### Privacy
+This project was conducted using de-identified patient data.
